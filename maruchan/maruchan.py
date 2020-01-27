@@ -46,6 +46,9 @@ async def on_message(message:discord.Message):
     ctx = await bot.get_context(message)
 
     if ctx.command is None:
+        if message.author.bot:
+            return
+
         print("kao")
         # Invocar Kaomojis si existen
         view = StringView(message.content)
