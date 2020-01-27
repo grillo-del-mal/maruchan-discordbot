@@ -42,14 +42,13 @@ async def on_ready():
 @bot.event
 async def on_message(message:discord.Message):
     """on_message."""
-    print("*", message.content)
     ctx = await bot.get_context(message)
 
     if ctx.command is None:
         if message.author.bot:
             return
 
-        print("kao")
+        logger.debug("kao")
         # Invocar Kaomojis si existen
         view = StringView(message.content)
 
@@ -61,10 +60,10 @@ async def on_message(message:discord.Message):
             key = random.sample(kaomoji.keys(), 1)[0]
 
         kao = random.sample(kaomoji[key], 1)[0]
-        print(kao)
+        logger.debug(kao)
         await ctx.send(kao)
     else:
-        print("processing")
+        logger.debug("processing")
         await bot.process_commands(message)
 
 @bot.command()
