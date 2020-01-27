@@ -1,9 +1,11 @@
 """Maru-chan."""
+import discord
 from discord.ext import commands
-from marubot import MaruBot
+from discord.ext.commands.view import StringView
 import json
 import codecs
 import upsidedown
+import random
 from rcon import RCON
 import logging
 
@@ -22,7 +24,12 @@ data = fp.read()
 config = json.loads(data)
 fp.close()
 
-bot = MaruBot(command_prefix=commands.when_mentioned)
+fp = codecs.open("emotes/kaomoji.json", "r", "utf-8")
+data = fp.read()
+kaomoji = json.loads(data)
+fp.close()
+
+bot = commands.Bot(command_prefix=commands.when_mentioned)
 
 @bot.event
 async def on_ready():
@@ -32,16 +39,40 @@ async def on_ready():
     logger.debug(bot.user.id)
     logger.debug('------')
 
+@bot.event
+async def on_message(message:discord.Message):
+    """on_message."""
+    print("*", message.content)
+    ctx = await bot.get_context(message)
+
+    if ctx.command is None:
+        print("kao")
+        # Invocar Kaomojis si existen
+        view = StringView(message.content)
+
+        key = None
+        prefix = await bot.get_prefix(message)
+        if view.skip_string(prefix):
+            key = view.get_word()
+        if key not in kaomoji.keys():
+            key = random.sample(kaomoji.keys(), 1)[0]
+
+        kao = random.sample(kaomoji[key], 1)[0]
+        print(kao)
+        await ctx.send(kao)
+    else:
+        print("processing")
+        await bot.process_commands(message)
 
 @bot.command()
-async def say(ctx: commands.Context, what_to_say: str):
+async def say(ctx: commands.Context, *, what_to_say: str):
     """say."""
     logger.debug("say:" + what_to_say)
     await ctx.send(what_to_say)
 
 
 @bot.command()
-async def unflip(ctx: commands.Context, what_to_unflip: str):
+async def unflip(ctx: commands.Context, *, what_to_unflip: str):
     """unflip."""
     logger.debug("unflip:" + what_to_unflip)
     if(what_to_unflip == "table"):
@@ -51,7 +82,7 @@ async def unflip(ctx: commands.Context, what_to_unflip: str):
 
 
 @bot.command()
-async def flip(ctx: commands.Context, what_to_flip: str):
+async def flip(ctx: commands.Context, *, what_to_flip: str):
     """flip."""
     logger.debug("flip:" + what_to_flip)
     if(what_to_flip == "table"):
