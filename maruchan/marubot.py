@@ -2,7 +2,6 @@
 
 from discord.ext import commands
 from discord.ext.commands.view import StringView
-import asyncio
 import codecs
 import json
 import random
@@ -13,37 +12,22 @@ data = fp.read()
 kaomoji = json.loads(data)
 fp.close()
 
-
 class MaruBot(commands.Bot):
     """MaruBot."""
 
-    @asyncio.coroutine
-    def on_message(self, message):
+    async def on_message(self, message:discord.Message):
         """on_message."""
-        view = StringView(message.content)
-        prefix = yield from self._get_prefix(message)
-        invoked_prefix = prefix
+        ctx = await self.get_context(message)
 
-        if not isinstance(prefix, (tuple, list)):
-            if not view.skip_string(prefix):
-                return
-        else:
-            invoked_prefix = discord.utils.find(view.skip_string, prefix)
-            if invoked_prefix is None:
-                return
-
-        invoker = view.get_word()
-        print(invoker, self.commands)
-
-        if invoker not in self.commands:
+        if ctx.command is None:
             print("kao")
             # Invocar Kaomojis si existen
             key = invoker
-            if(key not in kaomoji.keys()):
+            if key not in kaomoji.keys():
                 key = random.sample(kaomoji.keys(), 1)[0]
             kao = random.sample(kaomoji[key], 1)[0]
             print(kao)
-            yield from self.send_message(message.channel, kao)
+            await message.channel.send(kao)
         else:
             print("processing")
-            yield from self.process_commands(message)
+            self.process_commands(message)

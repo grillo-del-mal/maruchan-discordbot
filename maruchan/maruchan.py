@@ -6,7 +6,6 @@ import codecs
 import upsidedown
 from rcon import RCON
 import logging
-import docker
 
 formatter = logging.Formatter(
     fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
@@ -25,7 +24,6 @@ fp.close()
 
 bot = MaruBot(command_prefix=commands.when_mentioned)
 
-
 @bot.event
 async def on_ready():
     """on_ready."""
@@ -36,34 +34,34 @@ async def on_ready():
 
 
 @bot.command()
-async def say(*, what_to_say: str):
+async def say(ctx: commands.Context, what_to_say: str):
     """say."""
     logger.debug("say:" + what_to_say)
-    await bot.say(what_to_say)
+    await ctx.send(what_to_say)
 
 
 @bot.command()
-async def unflip(*, what_to_unflip: str):
+async def unflip(ctx: commands.Context, what_to_unflip: str):
     """unflip."""
     logger.debug("unflip:" + what_to_unflip)
     if(what_to_unflip == "table"):
-        await bot.say("┬─┬ノ(๑╹っ╹๑ノ)")
+        await ctx.send("┬─┬ノ(๑╹っ╹๑ノ)")
     else:
-        await bot.say(what_to_unflip+"ノ(๑╹っ╹๑ノ)")
+        await ctx.send(what_to_unflip+"ノ(๑╹っ╹๑ノ)")
 
 
 @bot.command()
-async def flip(*, what_to_flip: str):
+async def flip(ctx: commands.Context, what_to_flip: str):
     """flip."""
     logger.debug("flip:" + what_to_flip)
     if(what_to_flip == "table"):
-        await bot.say("(╯✿ㆁᴗㆁ）╯︵ ┻━┻")
+        await ctx.send("(╯✿ㆁᴗㆁ）╯︵ ┻━┻")
     else:
-        await bot.say("(╯✿ㆁᴗㆁ）╯︵" + upsidedown.transform(what_to_flip))
+        await ctx.send("(╯✿ㆁᴗㆁ）╯︵" + upsidedown.transform(what_to_flip))
 
 
 @bot.command()
-async def starbound_players():
+async def starbound_players(ctx: commands.Context):
     u"""starbound_players.
 
     Dice que jugadores estan en el servidor ahora.
@@ -82,12 +80,12 @@ async def starbound_players():
         logger.error(
             "starbound_players():" + str(e),
             exc_info=True)
-        await bot.say("(－ω－) zzZ")
+        await ctx.send("(－ω－) zzZ")
         return
     if players.startswith("There are 0/"):
-        await bot.say("(◞ ‸ ◟✿) no hay nadie jugando")
+        await ctx.send("(◞ ‸ ◟✿) no hay nadie jugando")
     else:
-        await bot.say("(✿•̀ ▽ •́ )φ:\n" + players)
+        await ctx.send("(✿•̀ ▽ •́ )φ:\n" + players)
 
 
 bot.run(config["bot"]["token"])
