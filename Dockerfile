@@ -1,12 +1,10 @@
-FROM fedora:23
+FROM python:3.6.1
 
-RUN dnf install -y --nogpgcheck gcc redhat-rpm-config python3 python3-pip \
-    python3-devel libsodium-devel python3-ipython git libffi-devel
+ADD maruchan/requirements.txt /src/requirements.txt
 
-RUN pip3 install git+https://github.com/Rapptz/discord.py@async
+RUN pip3 install -r /src/requirements.txt
 
 ADD maruchan /src
-ADD config.json /src/config.json
 
 WORKDIR /src
 
