@@ -54,14 +54,19 @@ async def on_message(message:discord.Message):
 
         key = None
         prefix = await bot.get_prefix(message)
+        logger.debug("searching for " + str(prefix))
         if view.skip_string(prefix):
             key = view.get_word()
+        else:
+            return
+
+        logger.debug("checking " + str(key))
         if key not in kaomoji.keys():
             key = random.sample(kaomoji.keys(), 1)[0]
 
         kao = random.sample(kaomoji[key], 1)[0]
         logger.debug(kao)
-        await ctx.send(kao)
+        await ctx.channel.send(kao)
     else:
         logger.debug("processing")
         await bot.process_commands(message)
@@ -72,7 +77,6 @@ async def say(ctx: commands.Context, *, what_to_say: str):
     logger.debug("say:" + what_to_say)
     await ctx.send(what_to_say)
 
-
 @bot.command()
 async def unflip(ctx: commands.Context, *, what_to_unflip: str):
     """unflip."""
@@ -82,7 +86,6 @@ async def unflip(ctx: commands.Context, *, what_to_unflip: str):
     else:
         await ctx.send(what_to_unflip+"ノ(๑╹っ╹๑ノ)")
 
-
 @bot.command()
 async def flip(ctx: commands.Context, *, what_to_flip: str):
     """flip."""
@@ -91,7 +94,6 @@ async def flip(ctx: commands.Context, *, what_to_flip: str):
         await ctx.send("(╯✿ㆁᴗㆁ）╯︵ ┻━┻")
     else:
         await ctx.send("(╯✿ㆁᴗㆁ）╯︵" + upsidedown.transform(what_to_flip))
-
 
 @bot.command()
 async def starbound_players(ctx: commands.Context):
