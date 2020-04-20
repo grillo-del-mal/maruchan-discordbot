@@ -8,6 +8,7 @@ import upsidedown
 import random
 from rcon import RCON
 import logging
+from pymongo import MongoClient
 
 formatter = logging.Formatter(
     fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
@@ -31,6 +32,13 @@ fp.close()
 
 bot = commands.Bot(command_prefix=commands.when_mentioned)
 
+client = MongoClient(
+    'mongo',
+    username='root',
+    password='password')
+
+db = client.get_database("animal_crossing")
+
 @bot.event
 async def on_ready():
     """on_ready."""
@@ -53,7 +61,7 @@ async def on_message(message:discord.Message):
         view = StringView(message.content)
 
         prefixes = await bot.get_prefix(message)
-        start = view.get_word()
+        start = view.get_word() 
         logger.debug("checking if " + str(start) + " in " + str(prefixes))
         
         # Revisar 
@@ -63,7 +71,7 @@ async def on_message(message:discord.Message):
                 [start in prefix for prefix in prefixes]
                 ))) == 0:
             return
-
+        
         emo_key = view.get_word()
 
         logger.debug("checking " + str(emo_key))
@@ -127,6 +135,15 @@ async def starbound_players(ctx: commands.Context):
         await ctx.send("(◞ ‸ ◟✿) no hay nadie jugando")
     else:
         await ctx.send("(✿•̀ ▽ •́ )φ:\n" + players)
+
+@bot.command()
+async def AC(ctx: commands.Context, *, stock_command: str):
+    """Animal Crossing."""
+    logger.debug("AC:" + stock_command)
+    logger.debug("  author: " + str(ctx.author))
+    logger.debug("  channel: " + str(ctx.channel))
+    logger.debug("  guild: " + str(ctx.guild))
+    logger.debug("  me: " + str(ctx.me))
 
 
 bot.run(config["bot"]["token"])
