@@ -160,7 +160,7 @@ async def AC(ctx: commands.Context, *, stock_command: str):
 
     member_name = str(ctx.author.name) + "#" + str(ctx.author.discriminator)
 
-    db["registry"].insert({
+    db["stalk_market"].insert_one({
         "user": member_name,
         "command": command
     })
