@@ -52,10 +52,16 @@ async def on_message(message:discord.Message):
         # Invocar Kaomojis si existen
         view = StringView(message.content)
 
-        prefix = await bot.get_prefix(message)
+        prefixes = await bot.get_prefix(message)
         start = view.get_word()
-        logger.debug("checking if " + str(start) + " in " + str(prefix))
-        if start not in prefix:
+        logger.debug("checking if " + str(start) + " in " + str(prefixes))
+        
+        # Revisar 
+        if len(list(
+            filter(
+                lambda x: x is True,
+                [start in prefix for prefix in prefixes]
+                ))) == 0:
             return
 
             key = view.get_word()
