@@ -64,13 +64,13 @@ async def on_message(message:discord.Message):
                 ))) == 0:
             return
 
-            key = view.get_word()
+        emo_key = view.get_word()
 
-        logger.debug("checking " + str(key))
-        if key not in kaomoji.keys():
-            key = random.sample(kaomoji.keys(), 1)[0]
+        logger.debug("checking " + str(emo_key))
+        if emo_key not in kaomoji.keys():
+            emo_key = random.sample(kaomoji.keys(), 1)[0]
 
-        kao = random.sample(kaomoji[key], 1)[0]
+        kao = random.sample(kaomoji[emo_key], 1)[0]
         logger.debug(kao)
         await ctx.channel.send(kao)
     else:
