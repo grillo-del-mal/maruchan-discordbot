@@ -157,8 +157,11 @@ async def AC(ctx: commands.Context, *, stock_command: str):
         command.append(arg)
         view.skip_ws()
         i += 1
+
+    member_name = str(ctx.author.name) + "#" + str(ctx.author.discriminator)
+
     db["registry"].insert({
-        "user": ctx.author,
+        "user": member_name,
         "command": command
     })
 
