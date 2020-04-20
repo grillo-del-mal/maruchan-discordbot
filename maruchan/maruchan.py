@@ -68,17 +68,20 @@ async def on_message(message:discord.Message):
         if len(list(
             filter(
                 lambda x: x is True,
-                [start in prefix for prefix in prefixes]
+                [start == prefix[:-1] for prefix in prefixes]
                 ))) == 0:
             return
-        
-        emo_key = view.get_word()
 
-        logger.debug("checking " + str(emo_key))
-        if emo_key not in kaomoji.keys():
-            emo_key = random.sample(kaomoji.keys(), 1)[0]
+        view.skip_ws()
+        key = None
+        if not view.eof:
+            key = view.get_word()
 
-        kao = random.sample(kaomoji[emo_key], 1)[0]
+        logger.debug("checking " + str(key))
+        if key not in kaomoji.keys():
+            key = random.sample(kaomoji.keys(), 1)[0]
+
+        kao = random.sample(kaomoji[key], 1)[0]
         logger.debug(kao)
         await ctx.channel.send(kao)
     else:
@@ -145,5 +148,18 @@ async def AC(ctx: commands.Context, *, stock_command: str):
     logger.debug("  guild: " + str(ctx.guild))
     logger.debug("  me: " + str(ctx.me))
 
+    command = []
+    view = StringView(stock_command)
+    i = 0
+    while not view.eof:
+        arg = view.get_word()
+        logger.debug("   arg[" + str(i) + "]: " + arg)
+        command.append(arg)
+        view.skip_ws()
+        i += 1
+    db["registry"].insert({
+        "user": ctx.author,
+        "command": command
+    })
 
 bot.run(config["bot"]["token"])
