@@ -271,7 +271,7 @@ class AnimalCrossing(commands.Cog):
         logger.debug("get_target:")
         logger.debug("  info:" + str(member_info))
         targets = [
-            member for member in ctx.channel.members if (
+            member for member in ctx.guild.members if (
                 member_info.lower() in member.display_name.lower()
                 ) or (
                     str(member.id) in member_info)]
