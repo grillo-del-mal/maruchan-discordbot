@@ -88,7 +88,7 @@ class AnimalCrossing(commands.Cog):
         logger.debug("get_all_data:")
         logger.debug("  date: " + str(year) + " " + str(week))
 
-        all_week_data = self._db["stalk_market"].find_many({
+        all_week_data = self._db["stalk_market"].find({
             "year": year,
             "week": week
         })
@@ -135,7 +135,7 @@ class AnimalCrossing(commands.Cog):
         logger.debug("get_plot:")
         logger.debug("  date: " + str(year) + " " + str(week))
 
-        all_week_data = self._db["stalk_market"].find_one({
+        all_week_data = self._db["stalk_market"].find({
             "year": year,
             "week": week
         })
