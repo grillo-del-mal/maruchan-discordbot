@@ -4,11 +4,12 @@ from discord.ext import commands
 from discord.ext.commands.view import StringView
 import json
 import codecs
-import upsidedown
 import random
-from rcon import RCON
 import logging
-from pymongo import MongoClient
+
+from rcon import RCON
+from animal_crossing import AnimalCrossing
+import upsidedown
 
 formatter = logging.Formatter(
     fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
@@ -31,13 +32,7 @@ kaomoji = json.loads(data)
 fp.close()
 
 bot = commands.Bot(command_prefix=commands.when_mentioned)
-
-client = MongoClient(
-    'mongo',
-    username='root',
-    password='password')
-
-db = client.get_database("animal_crossing")
+bot.add_command(AnimalCrossing(bot))
 
 @bot.event
 async def on_ready():
@@ -139,30 +134,5 @@ async def starbound_players(ctx: commands.Context):
     else:
         await ctx.send("(✿•̀ ▽ •́ )φ:\n" + players)
 
-@bot.command()
-async def AC(ctx: commands.Context, *, stock_command: str):
-    """Animal Crossing."""
-    logger.debug("AC:" + stock_command)
-    logger.debug("  author: " + str(ctx.author))
-    logger.debug("  channel: " + str(ctx.channel))
-    logger.debug("  guild: " + str(ctx.guild))
-    logger.debug("  me: " + str(ctx.me))
-
-    command = []
-    view = StringView(stock_command)
-    i = 0
-    while not view.eof:
-        arg = view.get_word()
-        logger.debug("   arg[" + str(i) + "]: " + arg)
-        command.append(arg)
-        view.skip_ws()
-        i += 1
-
-    member_name = str(ctx.author.name) + "#" + str(ctx.author.discriminator)
-
-    db["stalk_market"].insert_one({
-        "user": member_name,
-        "command": command
-    })
 
 bot.run(config["bot"]["token"])
