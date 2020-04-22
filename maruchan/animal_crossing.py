@@ -169,7 +169,7 @@ class AnimalCrossing(commands.Cog):
             target: discord.Member, 
             year: int, week: int, pattern: str):
 
-        logger.debug("update_data:")
+        logger.debug("set_last_pattern:")
         logger.debug("  target: " + str(target))
         logger.debug("  date: " + str(year) + " " + str(week))
         logger.debug("  pattern: " + pattern.upper())
@@ -188,7 +188,7 @@ class AnimalCrossing(commands.Cog):
                     "year": year,
                     "week": week,
                     "data": {},
-                    "pattern": pattern.upper()
+                    "lwp": pattern.upper()
                 })
             week_data = self._db["stalk_market"].find_one({
                 "user": str(target),
@@ -203,7 +203,7 @@ class AnimalCrossing(commands.Cog):
                     "year": year,
                     "week": week
                 },
-                {"$set": {"pattern": pattern.upper()}},
+                {"$set": {"lwp": pattern.upper()}},
                 return_document=ReturnDocument.AFTER)
 
         del week_data["_id"]
