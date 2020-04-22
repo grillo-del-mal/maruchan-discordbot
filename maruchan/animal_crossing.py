@@ -80,6 +80,29 @@ class AnimalCrossing(commands.Cog):
             if timeout_ms > 0 and msg is not None:
                 await msg.delete(delay=timeout_ms/1000)
 
+    async def get_all_data(
+            self, 
+            ctx: commands.Context, 
+            year: int, week: int,
+            timeout_ms: int = 0):
+        logger.debug("get_all_data:")
+        logger.debug("  date: " + str(year) + " " + str(week))
+
+        all_week_data = self._db["stalk_market"].find_many({
+            "year": year,
+            "week": week
+        })
+
+        for week_data in all_week_data:
+            del week_data["_id"]
+            logger.debug("  result: " + str(week_data))
+
+            if week_data is not None:
+                msg = await ctx.send("```" + json.dumps(
+                    week_data, sort_keys=True, indent=2) + "```")
+                if timeout_ms > 0 and msg is not None:
+                    await msg.delete(delay=timeout_ms/1000)
+
     async def get_plot(
             self, 
             ctx: commands.Context, 
@@ -100,8 +123,44 @@ class AnimalCrossing(commands.Cog):
                 "No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
             return
 
+        plot_link = self.gen_plot_link(week_data)
+
+        await ctx.send(
+            "`o(*ﾟ▽ﾟ*)o` el grafico de " + target.display_name + ": " + plot_link)
+
+    async def get_all_plots(
+            self, 
+            ctx: commands.Context, 
+            year: int, week: int):
+        logger.debug("get_plot:")
+        logger.debug("  date: " + str(year) + " " + str(week))
+
+        all_week_data = self._db["stalk_market"].find_one({
+            "year": year,
+            "week": week
+        })
+
+        if len(all_week_data) == 0:
+            await ctx.send(
+                "No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
+            return
+
+        for week_data in all_week_data:
+            plot_link = self.gen_plot_link(week_data)
+            members = [
+                member for member in ctx.guild.members if (
+                    str(member) == week_data.user)]
+            
+            if len(members) != 1:
+                continue
+
+            target = members[0]
+            await ctx.send(
+                "`o(*ﾟ▽ﾟ*)o` el grafico de " + target.display_name + ": " + plot_link)
+
+    def gen_plot_link(self, week_data):
         pattern = week_data.get("lwp", "")
-        plot_link = "".join((
+        return "".join((
             "https://turnipprophet.io?",
             "prices=%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % (
                 str(week_data["data"].get("d0-0", "")), 
@@ -127,9 +186,6 @@ class AnimalCrossing(commands.Cog):
                     )
                 )
             ))
-
-        await ctx.send(
-            "`o(*ﾟ▽ﾟ*)o` el grafico de " + target.display_name + ": " + plot_link)
 
     async def update_data(
             self, 
@@ -367,6 +423,24 @@ class AnimalCrossing(commands.Cog):
             await self.get_plot(ctx, target, save_year, save_week)
             return
 
+        if tags[0].lower() == "plot_all":
+            tag = tags.pop(0)
+            while len(tags) > 0:
+                tag = tags.pop(0)
+                ts = self.parse_timestamp(tag)
+
+                if ts is not None:
+                    timestamp = ts
+                else:
+                    await ctx.send(
+                        "`｡(*^▽^*)ゞ` no entendi... q es '" + str(
+                            tag) + "' ?")
+                    return
+
+            (save_year, save_week, _, _) = self.get_date(timestamp)
+            await self.get_all_plots(ctx, target, save_year, save_week)
+            return
+
         if tags[0].lower() == "dump":
             tag = tags.pop(0)
             while len(tags) > 0:
@@ -387,7 +461,25 @@ class AnimalCrossing(commands.Cog):
             await self.get_data(ctx, target, save_year, save_week)
             return
 
-        if tags[0].lower() == "last_pattern":
+        if tags[0].lower() == "dump_all":
+            tag = tags.pop(0)
+            while len(tags) > 0:
+                tag = tags.pop(0)
+                ts = self.parse_timestamp(tag)
+
+                if ts is not None:
+                    timestamp = ts
+                else:
+                    await ctx.send(
+                        "`｡(*^▽^*)ゞ` no entendi... q es '" + str(
+                            tag) + "' ?")
+                    return
+
+            (save_year, save_week, _, _) = self.get_date(timestamp)
+            await self.get_all_data(ctx, target, save_year, save_week)
+            return
+
+        if tags[0].lower() == "last_pattern" or tags[0].lower() == "lwp":
             tag = tags.pop(0)
             pattern = None
             while len(tags) > 0:
