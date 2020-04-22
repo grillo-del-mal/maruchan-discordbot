@@ -323,7 +323,7 @@ class AnimalCrossing(commands.Cog):
         return ts
 
 
-    @commands.command()
+    @commands.command(aliases=['Ac', 'aC', 'ac'])
     async def AC(self, ctx: commands.Context, *, stock_command: str):
         """Animal Crossing."""
         tags = []
