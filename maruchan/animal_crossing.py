@@ -66,7 +66,7 @@ class AnimalCrossing(commands.Cog):
             "week": week
         })
 
-        del week_data._id
+        del week_data["_id"]
         logger.debug("  result: " + str(week_data))
 
         if week_data is not None:
@@ -94,14 +94,14 @@ class AnimalCrossing(commands.Cog):
         pattern = week_data.get("lwp", "")
         plot_link = "".join((
             "https://turnipprophet.io?",
-            "prices=%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d" % (
-                week_data["data"].get("d0-0", ""), 
-                week_data["data"].get("d1-0", ""), week_data["data"].get("d1-1", ""), 
-                week_data["data"].get("d2-0", ""), week_data["data"].get("d2-1", ""), 
-                week_data["data"].get("d3-0", ""), week_data["data"].get("d3-1", ""), 
-                week_data["data"].get("d4-0", ""), week_data["data"].get("d4-1", ""), 
-                week_data["data"].get("d5-0", ""), week_data["data"].get("d5-1", ""), 
-                week_data["data"].get("d6-0", ""), week_data["data"].get("d6-1", "")), 
+            "prices=%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % (
+                str(week_data["data"].get("d0-0", "")), 
+                str(week_data["data"].get("d1-0", "")), str(week_data["data"].get("d1-1", "")), 
+                str(week_data["data"].get("d2-0", "")), str(week_data["data"].get("d2-1", "")), 
+                str(week_data["data"].get("d3-0", "")), str(week_data["data"].get("d3-1", "")), 
+                str(week_data["data"].get("d4-0", "")), str(week_data["data"].get("d4-1", "")), 
+                str(week_data["data"].get("d5-0", "")), str(week_data["data"].get("d5-1", "")), 
+                str(week_data["data"].get("d6-0", "")), str(week_data["data"].get("d6-1", ""))), 
                 "&pattern=0" if pattern == "F" else (
                     "&pattern=1" if pattern == "LS" else (
                         "&pattern=2" if pattern == "D" else (
@@ -160,7 +160,7 @@ class AnimalCrossing(commands.Cog):
                 {"$set": {"data.d" + str(day) + "-" + str(time): cant}},
                 return_document=ReturnDocument.AFTER)
 
-        del week_data._id
+        del week_data["_id"]
         await ctx.send("```" + str(week_data) + "```")
 
     async def set_last_pattern(
@@ -172,7 +172,7 @@ class AnimalCrossing(commands.Cog):
         logger.debug("update_data:")
         logger.debug("  target: " + str(target))
         logger.debug("  date: " + str(year) + " " + str(week))
-        logger.debug("  pattern: " + pattern)
+        logger.debug("  pattern: " + pattern.upper())
 
         week_data = self._db["stalk_market"].find_one({
             "user": str(target),
@@ -188,7 +188,7 @@ class AnimalCrossing(commands.Cog):
                     "year": year,
                     "week": week,
                     "data": {},
-                    "pattern": pattern
+                    "pattern": pattern.upper()
                 })
             week_data = self._db["stalk_market"].find_one({
                 "user": str(target),
@@ -203,10 +203,10 @@ class AnimalCrossing(commands.Cog):
                     "year": year,
                     "week": week
                 },
-                {"$set": {"pattern": pattern}},
+                {"$set": {"pattern": pattern.upper()}},
                 return_document=ReturnDocument.AFTER)
 
-        del week_data._id
+        del week_data["_id"]
         await ctx.send("```" + str(week_data) + "```")
 
     def get_target(self, ctx: commands.Context, member_info, default_result=None):
