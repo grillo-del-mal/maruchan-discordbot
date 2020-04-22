@@ -128,7 +128,8 @@ class AnimalCrossing(commands.Cog):
                 )
             ))
 
-        await ctx.send("`o(*ﾟ▽ﾟ*)o` " + plot_link)
+        await ctx.send(
+            "`o(*ﾟ▽ﾟ*)o` el grafico de " + target.display_name + ": " + plot_link)
 
     async def update_data(
             self, 
