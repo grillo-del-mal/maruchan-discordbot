@@ -140,11 +140,7 @@ class AnimalCrossing(commands.Cog):
             "week": week
         })
 
-        if len(all_week_data) == 0:
-            await ctx.send(
-                "No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
-            return
-
+        i = 0
         for week_data in all_week_data:
             plot_link = self.gen_plot_link(week_data)
             members = [
@@ -157,6 +153,13 @@ class AnimalCrossing(commands.Cog):
             target = members[0]
             await ctx.send(
                 "`o(*ﾟ▽ﾟ*)o` el grafico de " + target.display_name + ": " + plot_link)
+            i+=1
+
+        if i == 0:
+            await ctx.send(
+                "No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
+            return
+
 
     def gen_plot_link(self, week_data):
         pattern = week_data.get("lwp", "")
