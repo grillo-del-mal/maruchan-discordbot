@@ -51,13 +51,13 @@ async def on_message(message:discord.Message):
         if message.author.bot:
             return
 
-        logger.debug("kao")
+        # logger.debug("kao")
         # Invocar Kaomojis si existen
         view = StringView(message.content)
 
         prefixes = await bot.get_prefix(message)
         start = view.get_word() 
-        logger.debug("checking if " + str(start) + " in " + str(prefixes))
+        # logger.debug("checking if " + str(start) + " in " + str(prefixes))
         
         # Revisar 
         if len(list(
@@ -72,7 +72,7 @@ async def on_message(message:discord.Message):
         if not view.eof:
             key = view.get_word()
 
-        logger.debug("checking " + str(key))
+        # logger.debug("checking " + str(key))
         if key not in kaomoji.keys():
             key = random.sample(kaomoji.keys(), 1)[0]
 
@@ -80,7 +80,7 @@ async def on_message(message:discord.Message):
         logger.debug(kao)
         await ctx.channel.send(kao)
     else:
-        logger.debug("processing")
+        # logger.debug("processing")
         await bot.process_commands(message)
 
 @bot.command()

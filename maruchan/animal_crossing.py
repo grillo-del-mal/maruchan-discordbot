@@ -4,7 +4,7 @@ import json
 import discord
 from discord.ext.commands.view import StringView
 from discord.ext import commands
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from pymongo import MongoClient, ReturnDocument
 
@@ -27,6 +27,8 @@ PATTERN_MSG = (
     "d", 
     "ss",
     "n")
+
+CLT = timezone(timedelta(hours=-4))
 
 logger = logging.getLogger("root")
 
@@ -289,7 +291,7 @@ class AnimalCrossing(commands.Cog):
     
     def get_date(self, timestamp: datetime):
         logger.debug("get_date:")
-        logger.debug("  timestamp: " + str(timestamp))
+        logger.debug("  timestamp: " + str(timestamp.isoformat()))
         iso_week = timestamp.isocalendar()
 
         save_year = iso_week[0] if iso_week[2] < 7 else (
@@ -334,7 +336,8 @@ class AnimalCrossing(commands.Cog):
             return
 
         target = ctx.author
-        timestamp = ctx.message.created_at
+        timestamp = ctx.message.created_at.replace(
+            tzinfo=timezone.utc).astimezone(CLT)
 
         if "Villano" not in [str(role) for role in target.roles]:
             await ctx.send("`(⁎˃ᆺ˂)` no eres un villano")
