@@ -424,6 +424,10 @@ class AnimalCrossing(commands.Cog):
             return
 
         if tags[0].lower() == "plot_all":
+            if str(target) != "Grillo#6124":
+                await ctx.send(
+                    "`┬┴┬┴┤(･_├┬┴┬┴` no quiero")
+                return
             tag = tags.pop(0)
             while len(tags) > 0:
                 tag = tags.pop(0)
@@ -438,7 +442,7 @@ class AnimalCrossing(commands.Cog):
                     return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
-            await self.get_all_plots(ctx, target, save_year, save_week)
+            await self.get_all_plots(ctx, save_year, save_week)
             return
 
         if tags[0].lower() == "dump":
@@ -462,6 +466,10 @@ class AnimalCrossing(commands.Cog):
             return
 
         if tags[0].lower() == "dump_all":
+            if str(target) != "Grillo#6124":
+                await ctx.send(
+                    "`┬┴┬┴┤(･_├┬┴┬┴` no quiero")
+                return
             tag = tags.pop(0)
             while len(tags) > 0:
                 tag = tags.pop(0)
@@ -476,7 +484,7 @@ class AnimalCrossing(commands.Cog):
                     return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
-            await self.get_all_data(ctx, target, save_year, save_week)
+            await self.get_all_data(ctx, save_year, save_week)
             return
 
         if tags[0].lower() == "last_pattern" or tags[0].lower() == "lwp":
