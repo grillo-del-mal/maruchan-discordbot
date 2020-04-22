@@ -145,7 +145,7 @@ class AnimalCrossing(commands.Cog):
             plot_link = self.gen_plot_link(week_data)
             members = [
                 member for member in ctx.guild.members if (
-                    str(member) == week_data.user)]
+                    str(member) == week_data["user"])]
             
             if len(members) != 1:
                 continue
