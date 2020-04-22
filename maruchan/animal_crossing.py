@@ -333,6 +333,10 @@ class AnimalCrossing(commands.Cog):
         target = ctx.author
         timestamp = ctx.message.created_at
 
+        if "Villano" not in [str(role) for role in target.roles]:
+            await ctx.send("`(⁎˃ᆺ˂)` no eres un villano")
+            return
+
         if tags[0].lower() == "plot":
             tag = tags.pop(0)
             while len(tags) > 0:
@@ -350,6 +354,10 @@ class AnimalCrossing(commands.Cog):
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
+            if "Villano" not in [str(role) for role in target.roles]:
+                await ctx.send(
+                    "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
+                return
             await self.get_plot(ctx, target, save_year, save_week)
             return
 
@@ -370,6 +378,10 @@ class AnimalCrossing(commands.Cog):
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
+            if "Villano" not in [str(role) for role in target.roles]:
+                await ctx.send(
+                    "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
+                return
             await self.get_data(ctx, target, save_year, save_week)
             return
 
@@ -395,6 +407,10 @@ class AnimalCrossing(commands.Cog):
             (save_year, save_week, _, _) = self.get_date(timestamp)
             if pattern is None:
                 await ctx.send("`｢(ﾟﾍﾟ)` q patron?")
+                return
+            if "Villano" not in [str(role) for role in target.roles]:
+                await ctx.send(
+                    "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
                 return
 
             await self.set_last_pattern(ctx, target, save_year, save_week, pattern)
@@ -434,6 +450,10 @@ class AnimalCrossing(commands.Cog):
             save_day, 
             save_time_ts) = self.get_date(timestamp)
         save_time = save_time_ts if save_time is None else save_time
+        if "Villano" not in [str(role) for role in target.roles]:
+            await ctx.send(
+                "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
+            return
 
         await self.update_data(
             ctx, target, 
