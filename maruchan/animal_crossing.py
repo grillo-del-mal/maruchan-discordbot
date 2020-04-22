@@ -25,7 +25,8 @@ PATTERN_MSG = (
     "ls", 
     "f", 
     "d", 
-    "ss")
+    "ss",
+    "n")
 
 logger = logging.getLogger("root")
 
@@ -90,7 +91,8 @@ class AnimalCrossing(commands.Cog):
         })
 
         if week_data is None:
-            await ctx.send("No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
+            await ctx.send(
+                "No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
             return
 
         pattern = week_data.get("lwp", "")
@@ -98,12 +100,18 @@ class AnimalCrossing(commands.Cog):
             "https://turnipprophet.io?",
             "prices=%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % (
                 str(week_data["data"].get("d0-0", "")), 
-                str(week_data["data"].get("d1-0", "")), str(week_data["data"].get("d1-1", "")), 
-                str(week_data["data"].get("d2-0", "")), str(week_data["data"].get("d2-1", "")), 
-                str(week_data["data"].get("d3-0", "")), str(week_data["data"].get("d3-1", "")), 
-                str(week_data["data"].get("d4-0", "")), str(week_data["data"].get("d4-1", "")), 
-                str(week_data["data"].get("d5-0", "")), str(week_data["data"].get("d5-1", "")), 
-                str(week_data["data"].get("d6-0", "")), str(week_data["data"].get("d6-1", ""))), 
+                str(week_data["data"].get("d1-0", "")), 
+                str(week_data["data"].get("d1-1", "")), 
+                str(week_data["data"].get("d2-0", "")), 
+                str(week_data["data"].get("d2-1", "")), 
+                str(week_data["data"].get("d3-0", "")), 
+                str(week_data["data"].get("d3-1", "")), 
+                str(week_data["data"].get("d4-0", "")), 
+                str(week_data["data"].get("d4-1", "")), 
+                str(week_data["data"].get("d5-0", "")), 
+                str(week_data["data"].get("d5-1", "")), 
+                str(week_data["data"].get("d6-0", "")), 
+                str(week_data["data"].get("d6-1", ""))), 
                 "&pattern=0" if pattern == "F" else (
                     "&pattern=1" if pattern == "LS" else (
                         "&pattern=2" if pattern == "D" else (
@@ -137,6 +145,9 @@ class AnimalCrossing(commands.Cog):
         })
         
         if week_data is None:
+            if cant == 0:
+                ctx.send("`˓˓(ᑊᘩᑊ⁎)`")
+                return
             logger.debug("  creating!")
             self._db["stalk_market"].insert({
                 "user": str(target),
@@ -153,14 +164,34 @@ class AnimalCrossing(commands.Cog):
             })
         else:
             logger.debug("  updating!")
-            week_data = self._db["stalk_market"].find_one_and_update(
-                {
-                    "user": str(target),
-                    "year": year,
-                    "week": week
-                },
-                {"$set": {"data.d" + str(day) + "-" + str(time): cant}},
-                return_document=ReturnDocument.AFTER)
+            if cant == 0:
+                week_data = self._db["stalk_market"].find_one_and_update(
+                    {
+                        "user": str(target),
+                        "year": year,
+                        "week": week
+                    },
+                    {"$unset": {
+                        "data.d" + str(day) + "-" + str(time): ""}},
+                    return_document=ReturnDocument.AFTER)
+                if len(week_data["data"].keys()) == 0:
+                    self._db["stalk_market"].find_one_and_delete(
+                    {
+                        "user": str(target),
+                        "year": year,
+                        "week": week
+                    })
+                    await ctx.send("`Σ(゜ロ゜;)` ya no hay datos")
+                    return
+            else:
+                week_data = self._db["stalk_market"].find_one_and_update(
+                    {
+                        "user": str(target),
+                        "year": year,
+                        "week": week
+                    },
+                    {"$set": {"data.d" + str(day) + "-" + str(time): cant}},
+                    return_document=ReturnDocument.AFTER)
 
         del week_data["_id"]
 
@@ -201,21 +232,42 @@ class AnimalCrossing(commands.Cog):
             })
         else:
             logger.debug("  updating!")
-            week_data = self._db["stalk_market"].find_one_and_update(
-                {
-                    "user": str(target),
-                    "year": year,
-                    "week": week
-                },
-                {"$set": {"lwp": pattern.upper()}},
-                return_document=ReturnDocument.AFTER)
+            if pattern.upper() == "N":
+                week_data = self._db["stalk_market"].find_one_and_update(
+                    {
+                        "user": str(target),
+                        "year": year,
+                        "week": week
+                    },
+                    {"$unset": {"lwp": ""}},
+                    return_document=ReturnDocument.AFTER)
+
+                if len(week_data["data"].keys()) == 0:
+                    self._db["stalk_market"].find_one_and_delete(
+                    {
+                        "user": str(target),
+                        "year": year,
+                        "week": week
+                    })
+                    await ctx.send("`Σ(゜ロ゜;)` ya no hay datos")
+                    return
+            else:
+                week_data = self._db["stalk_market"].find_one_and_update(
+                    {
+                        "user": str(target),
+                        "year": year,
+                        "week": week
+                    },
+                    {"$set": {"lwp": pattern.upper()}},
+                    return_document=ReturnDocument.AFTER)
 
         del week_data["_id"]
 
         await ctx.send("`(*＾▽＾)／` recibido")
         await self.get_data(ctx, target, year, week)
 
-    def get_target(self, ctx: commands.Context, member_info, default_result=None):
+    def get_target(
+            self, ctx: commands.Context, member_info, default_result=None):
         logger.debug("get_target:")
         logger.debug("  info:" + str(member_info))
         targets = [
@@ -245,7 +297,8 @@ class AnimalCrossing(commands.Cog):
         save_day = iso_week[2] if iso_week[2] < 7 else 0
         save_time = 0 if timestamp.hour < 12 or save_day == 0 else 1
 
-        logger.debug("  result: " + str((save_year, save_week, save_day, save_time)))
+        logger.debug(
+            "  result: " + str((save_year, save_week, save_day, save_time)))
         return (save_year, save_week, save_day, save_time)
 
     def parse_timestamp(self, possible_ts:str):
@@ -291,7 +344,9 @@ class AnimalCrossing(commands.Cog):
                 else:
                     target = self.get_target(ctx, tag, None)
                     if target is None:
-                        await ctx.send("`｡(*^▽^*)ゞ` no entendi... q es '" + str(tag) + "' ?")
+                        await ctx.send(
+                            "`｡(*^▽^*)ゞ` no entendi... q es '" + str(
+                                tag) + "' ?")
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
@@ -309,7 +364,9 @@ class AnimalCrossing(commands.Cog):
                 else:
                     target = self.get_target(ctx, tag, None)
                     if target is None:
-                        await ctx.send("`｡(*^▽^*)ゞ` no entendi... q es '" + str(tag) + "' ?")
+                        await ctx.send(
+                            "`｡(*^▽^*)ゞ` no entendi... q es '" + str(
+                                tag) + "' ?")
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
@@ -330,7 +387,9 @@ class AnimalCrossing(commands.Cog):
                 else:
                     target = self.get_target(ctx, tag, None)
                     if target is None:
-                        await ctx.send("`｡(*^▽^*)ゞ` no entendi... q es '" + str(tag) + "' ?")
+                        await ctx.send(
+                            "`｡(*^▽^*)ゞ` no entendi... q es '" + str(
+                                tag) + "' ?")
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
