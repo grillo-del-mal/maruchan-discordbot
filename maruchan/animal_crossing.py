@@ -25,13 +25,14 @@ logger = logging.getLogger("root")
 
 class AnimalCrossing(commands.Cog):
 
-    def __init__(self):
-        self.client = MongoClient(
+    def __init__(self, bot):
+        self.bot = bot
+        self._client = MongoClient(
             'mongo',
             username='root',
             password='password')
 
-        self.db = self.client.get_database("animal_crossing")
+        self._db = self._client.get_database("animal_crossing")
 
 
     async def show_info(self, ctx: commands.Context, tags):
@@ -53,7 +54,7 @@ class AnimalCrossing(commands.Cog):
         logger.debug("  target: " + str(target))
         logger.debug("  date: " + str(year) + " " + str(week))
 
-        week_data = self.db["stalk_market"].find_one({
+        week_data = self._db["stalk_market"].find_one({
             "user": str(target),
             "year": year,
             "week": week
@@ -86,7 +87,7 @@ class AnimalCrossing(commands.Cog):
         logger.debug("  time: " + str(day) + " " + str(time))
         logger.debug("  cant: " + str(cant))
 
-        week_data = self.db["stalk_market"].find_one({
+        week_data = self._db["stalk_market"].find_one({
             "user": str(target),
             "year": year,
             "week": week
@@ -94,7 +95,7 @@ class AnimalCrossing(commands.Cog):
         
         if week_data is None:
             logger.debug("  creating!")
-            self.db["stalk_market"].insert({
+            self._db["stalk_market"].insert({
                 "user": str(target),
                 "year": year,
                 "week": week,
@@ -102,14 +103,14 @@ class AnimalCrossing(commands.Cog):
                     "d" + str(day) + "-" + str(time) : cant
                 }
             })
-            week_data = self.db["stalk_market"].find_one({
+            week_data = self._db["stalk_market"].find_one({
                 "user": str(target),
                 "year": year,
                 "week": week
             })
         else:
             logger.debug("  updating!")
-            self.db["stalk_market"].find_one_and_update(
+            self._db["stalk_market"].find_one_and_update(
                 {
                     "user": str(target),
                     "year": year,
