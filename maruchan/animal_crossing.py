@@ -35,7 +35,7 @@ class AnimalCrossing(commands.Cog):
         self._db = self._client.get_database("animal_crossing")
 
 
-    async def show_info(self, ctx: commands.Context, tags):
+    def show_info(self, ctx: commands.Context, tags):
         logger.debug("AC:")
         logger.debug("  author: " + str(ctx.author))
         logger.debug("  channel: " + str(ctx.channel))
@@ -169,7 +169,7 @@ class AnimalCrossing(commands.Cog):
             return
 
         target = ctx.author
-        timestamp = ctx.message.created_at()
+        timestamp = ctx.message.created_at
 
         if tags[0].lower() == "plot":
             tag = tags.pop(0)
@@ -248,7 +248,7 @@ class AnimalCrossing(commands.Cog):
             save_day, 
             save_time) = self.get_date(timestamp)
 
-        self.update_data(
+        await self.update_data(
             ctx, target, 
             save_year, save_week, save_day, save_time, 
             int(tags[0]))
