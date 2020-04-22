@@ -251,5 +251,5 @@ class AnimalCrossing(commands.Cog):
         await self.update_data(
             ctx, target, 
             save_year, save_week, save_day, save_time, 
-            int(tags[0]))
+            stalk_count)
 
