@@ -250,11 +250,12 @@ class AnimalCrossing(commands.Cog):
 
     def parse_timestamp(self, possible_ts:str):
         ts = None
-        fmts = ("%Y-%m-%d", "%m-%d")
-        for fmt in fmts:
+        try:
+            ts = datetime.strptime(possible_ts, "%Y-%m-%d")
+        except ValueError:
             try:
-                ts = datetime.strptime(possible_ts, fmt)
-                break
+                ts = datetime.strptime(possible_ts, "%m-%d")
+                ts.year = datetime.today.year
             except ValueError:
                 ts = None
         return ts
