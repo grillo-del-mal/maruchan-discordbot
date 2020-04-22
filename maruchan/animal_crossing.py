@@ -78,7 +78,7 @@ class AnimalCrossing(commands.Cog):
             msg = await ctx.send("```" + json.dumps(
                 week_data, sort_keys=True, indent=2) + "```")
             if timeout_ms > 0 and msg is not None:
-                await msg.delete(timeout_ms/1000)
+                await msg.delete(delay=timeout_ms/1000)
 
     async def get_plot(
             self, 
@@ -150,7 +150,7 @@ class AnimalCrossing(commands.Cog):
         })
         
         if week_data is None:
-            if cant == 0:
+            if cant <= 0:
                 ctx.send("`˓˓(ᑊᘩᑊ⁎)`")
                 return
             logger.debug("  creating!")
@@ -169,7 +169,7 @@ class AnimalCrossing(commands.Cog):
             })
         else:
             logger.debug("  updating!")
-            if cant == 0:
+            if cant <= 0:
                 week_data = self._db["stalk_market"].find_one_and_update(
                     {
                         "user": str(target),
