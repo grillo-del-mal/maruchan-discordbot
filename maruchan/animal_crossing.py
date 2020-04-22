@@ -5,7 +5,7 @@ from discord.ext.commands.view import StringView
 from discord.ext import commands
 from datetime import datetime, timedelta
 
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 
 DATE_MSG = (
     "lunes", 
@@ -19,6 +19,12 @@ DATE_MSG = (
 TIME_MSG = (
     "am", 
     "pm")
+
+PATTERN_MSG = (
+    "ls", 
+    "f", 
+    "d", 
+    "ss")
 
 logger = logging.getLogger("root")
 
@@ -60,6 +66,7 @@ class AnimalCrossing(commands.Cog):
             "week": week
         })
 
+        del week_data._id
         logger.debug("  result: " + str(week_data))
 
         if week_data is not None:
@@ -73,6 +80,40 @@ class AnimalCrossing(commands.Cog):
         logger.debug("get_plot:")
         logger.debug("  target: " + str(target))
         logger.debug("  date: " + str(year) + " " + str(week))
+
+        week_data = self._db["stalk_market"].find_one({
+            "user": str(target),
+            "year": year,
+            "week": week
+        })
+
+        if week_data is None:
+            await ctx.send("No hay datos ˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚")
+            return
+
+        pattern = week_data.get("lwp", "")
+        plot_link = "".join((
+            "https://turnipprophet.io?",
+            "prices=%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d.%d" % (
+                week_data["data"].get("d0-0", ""), 
+                week_data["data"].get("d1-0", ""), week_data["data"].get("d1-1", ""), 
+                week_data["data"].get("d2-0", ""), week_data["data"].get("d2-1", ""), 
+                week_data["data"].get("d3-0", ""), week_data["data"].get("d3-1", ""), 
+                week_data["data"].get("d4-0", ""), week_data["data"].get("d4-1", ""), 
+                week_data["data"].get("d5-0", ""), week_data["data"].get("d5-1", ""), 
+                week_data["data"].get("d6-0", ""), week_data["data"].get("d6-1", "")), 
+                "&pattern=0" if pattern == "F" else (
+                    "&pattern=1" if pattern == "LS" else (
+                        "&pattern=2" if pattern == "D" else (
+                            "&pattern=3" if pattern == "SS" else (
+                                ""
+                            )
+                        )
+                    )
+                )
+            ))
+
+        await ctx.send("o(*ﾟ▽ﾟ*)o " + plot_link)
 
     async def update_data(
             self, 
@@ -110,14 +151,62 @@ class AnimalCrossing(commands.Cog):
             })
         else:
             logger.debug("  updating!")
-            self._db["stalk_market"].find_one_and_update(
+            week_data = self._db["stalk_market"].find_one_and_update(
                 {
                     "user": str(target),
                     "year": year,
                     "week": week
                 },
-                {"$set": {"data.d" + str(day) + "-" + str(time): cant}}
-                )
+                {"$set": {"data.d" + str(day) + "-" + str(time): cant}},
+                return_document=ReturnDocument.AFTER)
+
+        del week_data._id
+        await ctx.send("```" + str(week_data) + "```")
+
+    async def set_last_pattern(
+            self, 
+            ctx: commands.Context, 
+            target: discord.Member, 
+            year: int, week: int, pattern: str):
+
+        logger.debug("update_data:")
+        logger.debug("  target: " + str(target))
+        logger.debug("  date: " + str(year) + " " + str(week))
+        logger.debug("  pattern: " + pattern)
+
+        week_data = self._db["stalk_market"].find_one({
+            "user": str(target),
+            "year": year,
+            "week": week
+        })
+        
+        if week_data is None:
+            logger.debug("  creating!")
+            self._db["stalk_market"].insert_one(
+                {
+                    "user": str(target),
+                    "year": year,
+                    "week": week,
+                    "data": {},
+                    "pattern": pattern
+                })
+            week_data = self._db["stalk_market"].find_one({
+                "user": str(target),
+                "year": year,
+                "week": week
+            })
+        else:
+            logger.debug("  updating!")
+            week_data = self._db["stalk_market"].find_one_and_update(
+                {
+                    "user": str(target),
+                    "year": year,
+                    "week": week
+                },
+                {"$set": {"pattern": pattern}},
+                return_document=ReturnDocument.AFTER)
+
+        del week_data._id
         await ctx.send("```" + str(week_data) + "```")
 
     def get_target(self, ctx: commands.Context, member_info, default_result=None):
@@ -211,13 +300,40 @@ class AnimalCrossing(commands.Cog):
             await self.get_data(ctx, target, save_year, save_week)
             return
 
+        if tags[0].lower() == "last_pattern":
+            tag = tags.pop(0)
+            pattern = None
+            while len(tags) > 0:
+                tag = tags.pop(0)
+                ts = None
+                try:
+                    ts = datetime.strptime(tag, "%Y-%m-%d")
+                except ValueError:
+                    ts = None
+
+                if tag.lower() in PATTERN_MSG:
+                    pattern = tag
+                elif ts is not None:
+                    timestamp = ts
+                else:
+                    target = self.get_target(ctx, tag, None)
+                    if target is None:
+                        return
+
+            (save_year, save_week, _, _) = self.get_date(timestamp)
+            if pattern is None:
+                return
+
+            await self.set_last_pattern(ctx, target, save_year, save_week, pattern)
+            return
+
         # Es insersion de datos
         stalk_count = tags.pop()
         if not stalk_count.isdigit():
             return
 
         stalk_count = int(stalk_count)
-
+        save_time = None
         while len(tags) > 0:
             tag = tags.pop(0)
             ts = None
@@ -246,7 +362,8 @@ class AnimalCrossing(commands.Cog):
             save_year, 
             save_week, 
             save_day, 
-            save_time) = self.get_date(timestamp)
+            save_time_ts) = self.get_date(timestamp)
+        save_time = save_time_ts if save_time is None else save_time
 
         await self.update_data(
             ctx, target, 
