@@ -32,7 +32,7 @@ kaomoji = json.loads(data)
 fp.close()
 
 bot = commands.Bot(command_prefix=commands.when_mentioned)
-bot.add_command(AnimalCrossing(bot))
+bot.add_cog(AnimalCrossing(bot))
 
 @bot.event
 async def on_ready():
