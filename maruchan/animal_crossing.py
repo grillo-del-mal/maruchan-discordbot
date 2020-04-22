@@ -450,6 +450,7 @@ class AnimalCrossing(commands.Cog):
             save_day, 
             save_time_ts) = self.get_date(timestamp)
         save_time = save_time_ts if save_time is None else save_time
+        save_time = save_time if save_day != 0 else 0
         if "Villano" not in [str(role) for role in target.roles]:
             await ctx.send(
                 "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
