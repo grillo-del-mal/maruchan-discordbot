@@ -1,4 +1,5 @@
 import logging
+import json
 
 import discord
 from discord.ext.commands.view import StringView
@@ -70,7 +71,8 @@ class AnimalCrossing(commands.Cog):
         logger.debug("  result: " + str(week_data))
 
         if week_data is not None:
-            await ctx.send("```" + str(week_data) + "```")
+            await ctx.send("```" + json.dumps(
+                week_data, sort_keys=True, indent=2) + "```")
 
     async def get_plot(
             self, 
@@ -88,7 +90,7 @@ class AnimalCrossing(commands.Cog):
         })
 
         if week_data is None:
-            await ctx.send("No hay datos ˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚")
+            await ctx.send("No hay datos para graficar ˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚")
             return
 
         pattern = week_data.get("lwp", "")
@@ -161,7 +163,9 @@ class AnimalCrossing(commands.Cog):
                 return_document=ReturnDocument.AFTER)
 
         del week_data["_id"]
-        await ctx.send("```" + str(week_data) + "```")
+
+        await ctx.send("(*＾▽＾)／ recibido: ```" + json.dumps(
+            week_data, sort_keys=True, indent=2) + "```")
 
     async def set_last_pattern(
             self, 
@@ -207,7 +211,9 @@ class AnimalCrossing(commands.Cog):
                 return_document=ReturnDocument.AFTER)
 
         del week_data["_id"]
-        await ctx.send("```" + str(week_data) + "```")
+
+        await ctx.send("(*＾▽＾)／ recibido: ```" + json.dumps(
+            week_data, sort_keys=True, indent=2) + "```")
 
     def get_target(self, ctx: commands.Context, member_info, default_result=None):
         logger.debug("get_target:")
@@ -242,6 +248,18 @@ class AnimalCrossing(commands.Cog):
         logger.debug("  result: " + str((save_year, save_week, save_day, save_time)))
         return (save_year, save_week, save_day, save_time)
 
+    def parse_timestamp(self, possible_ts:str):
+        ts = None
+        fmts = ("%Y-%m-%d", "%m-%d")
+        for fmt in fmts:
+            try:
+                ts = datetime.strptime(possible_ts, fmt)
+                break
+            except ValueError:
+                ts = None
+        return ts
+
+
     @commands.command()
     async def AC(self, ctx: commands.Context, *, stock_command: str):
         """Animal Crossing."""
@@ -255,6 +273,7 @@ class AnimalCrossing(commands.Cog):
         self.show_info(ctx, tags)
 
         if len(tags) == 0:
+            await ctx.send("(●´ω｀●)ゞ")
             return
 
         target = ctx.author
@@ -264,16 +283,14 @@ class AnimalCrossing(commands.Cog):
             tag = tags.pop(0)
             while len(tags) > 0:
                 tag = tags.pop(0)
-                ts = None
-                try:
-                    ts = datetime.strptime(tag, "%Y-%m-%d")
-                except ValueError:
-                    ts = None
+                ts = self.parse_timestamp(tag)
+
                 if ts is not None:
                     timestamp = ts
                 else:
                     target = self.get_target(ctx, tag, None)
                     if target is None:
+                        await ctx.send("｡(*^▽^*)ゞ no entendi... q es '" + str(tag) + "' ?")
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
@@ -284,16 +301,14 @@ class AnimalCrossing(commands.Cog):
             tag = tags.pop(0)
             while len(tags) > 0:
                 tag = tags.pop(0)
-                ts = None
-                try:
-                    ts = datetime.strptime(tag, "%Y-%m-%d")
-                except ValueError:
-                    ts = None
+                ts = self.parse_timestamp(tag)
+
                 if ts is not None:
                     timestamp = ts
                 else:
                     target = self.get_target(ctx, tag, None)
                     if target is None:
+                        await ctx.send("｡(*^▽^*)ゞ no entendi... q es '" + str(tag) + "' ?")
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
@@ -305,11 +320,7 @@ class AnimalCrossing(commands.Cog):
             pattern = None
             while len(tags) > 0:
                 tag = tags.pop(0)
-                ts = None
-                try:
-                    ts = datetime.strptime(tag, "%Y-%m-%d")
-                except ValueError:
-                    ts = None
+                ts = self.parse_timestamp(tag)
 
                 if tag.lower() in PATTERN_MSG:
                     pattern = tag
@@ -318,10 +329,12 @@ class AnimalCrossing(commands.Cog):
                 else:
                     target = self.get_target(ctx, tag, None)
                     if target is None:
+                        await ctx.send("｡(*^▽^*)ゞ no entendi... q es '" + str(tag) + "' ?")
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
             if pattern is None:
+                await ctx.send("｢(ﾟﾍﾟ) q patron?")
                 return
 
             await self.set_last_pattern(ctx, target, save_year, save_week, pattern)
@@ -330,17 +343,14 @@ class AnimalCrossing(commands.Cog):
         # Es insersion de datos
         stalk_count = tags.pop()
         if not stalk_count.isdigit():
+            await ctx.send("~(>_<~) no entiendo")
             return
 
         stalk_count = int(stalk_count)
         save_time = None
         while len(tags) > 0:
             tag = tags.pop(0)
-            ts = None
-            try:
-                ts = datetime.strptime(tag, "%Y-%m-%d")
-            except ValueError:
-                ts = None
+            ts = self.parse_timestamp(tag)
 
             if tag.lower() in TIME_MSG:
                 save_time = 0 if tag.lower() == "am" else 1
