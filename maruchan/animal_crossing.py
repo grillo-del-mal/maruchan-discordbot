@@ -275,10 +275,13 @@ class AnimalCrossing(commands.Cog):
                 member_info.lower() in member.display_name.lower()
                 ) or (
                     str(member.id) in member_info)]
+        targets = [target for target in targets if "Villano" in [
+            str(role) for role in target.roles]]
 
         if(len(targets) != 1):
             # couldnt find target
-            logger.debug("  GAAHH " + targets)
+            logger.debug("  GAAHH " + str(
+                [str(target) for target in targets]))
             return default_result
 
         logger.debug("  found: " + str(targets[0]))
@@ -354,10 +357,6 @@ class AnimalCrossing(commands.Cog):
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
-            if "Villano" not in [str(role) for role in target.roles]:
-                await ctx.send(
-                    "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
-                return
             await self.get_plot(ctx, target, save_year, save_week)
             return
 
@@ -378,10 +377,6 @@ class AnimalCrossing(commands.Cog):
                         return
 
             (save_year, save_week, _, _) = self.get_date(timestamp)
-            if "Villano" not in [str(role) for role in target.roles]:
-                await ctx.send(
-                    "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
-                return
             await self.get_data(ctx, target, save_year, save_week)
             return
 
@@ -407,10 +402,6 @@ class AnimalCrossing(commands.Cog):
             (save_year, save_week, _, _) = self.get_date(timestamp)
             if pattern is None:
                 await ctx.send("`｢(ﾟﾍﾟ)` q patron?")
-                return
-            if "Villano" not in [str(role) for role in target.roles]:
-                await ctx.send(
-                    "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
                 return
 
             await self.set_last_pattern(ctx, target, save_year, save_week, pattern)
@@ -451,10 +442,6 @@ class AnimalCrossing(commands.Cog):
             save_time_ts) = self.get_date(timestamp)
         save_time = save_time_ts if save_time is None else save_time
         save_time = save_time if save_day != 0 else 0
-        if "Villano" not in [str(role) for role in target.roles]:
-            await ctx.send(
-                "`(⁎˃ᆺ˂)` " + target.display_name + " no es un villano")
-            return
 
         await self.update_data(
             ctx, target, 
