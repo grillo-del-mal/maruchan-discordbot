@@ -59,7 +59,8 @@ class AnimalCrossing(commands.Cog):
             self, 
             ctx: commands.Context, 
             target: discord.Member, 
-            year: int, week: int):
+            year: int, week: int,
+            timeout_ms: int = 0):
         logger.debug("get_data:")
         logger.debug("  target: " + str(target))
         logger.debug("  date: " + str(year) + " " + str(week))
@@ -74,8 +75,10 @@ class AnimalCrossing(commands.Cog):
         logger.debug("  result: " + str(week_data))
 
         if week_data is not None:
-            await ctx.send("```" + json.dumps(
+            msg = await ctx.send("```" + json.dumps(
                 week_data, sort_keys=True, indent=2) + "```")
+            if timeout_ms > 0 and msg is not None:
+                await msg.delete(timeout_ms/1000)
 
     async def get_plot(
             self, 
@@ -198,7 +201,7 @@ class AnimalCrossing(commands.Cog):
         del week_data["_id"]
 
         await ctx.send("`(*＾▽＾)／` recibido")
-        await self.get_data(ctx, target, year, week)
+        await self.get_data(ctx, target, year, week, 10000)
 
     async def set_last_pattern(
             self, 
@@ -266,7 +269,7 @@ class AnimalCrossing(commands.Cog):
         del week_data["_id"]
 
         await ctx.send("`(*＾▽＾)／` recibido")
-        await self.get_data(ctx, target, year, week)
+        await self.get_data(ctx, target, year, week, 10000)
 
     def get_target(
             self, ctx: commands.Context, member_info, default_result=None):
