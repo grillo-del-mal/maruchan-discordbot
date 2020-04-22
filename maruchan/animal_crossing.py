@@ -255,7 +255,7 @@ class AnimalCrossing(commands.Cog):
         except ValueError:
             try:
                 ts = datetime.strptime(possible_ts, "%m-%d")
-                ts.year = datetime.today.year
+                ts = ts.replace(year=datetime.today().year)
             except ValueError:
                 ts = None
         return ts
