@@ -14,6 +14,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import io
 from hashlib import blake2b
 import base64
+import time
 
 DATE_MSG = (
     "lunes", 
@@ -71,9 +72,9 @@ class AnimalCrossing(commands.Cog):
             driver.get("http://turnipprophet:8000/" + args)
             canvas = driver.find_element_by_id("chart")
 
-            canvas_base64 = driver.execute_script("return arguments[0].toDataURL('image/png').substring(21);", canvas)
+            time.sleep(1)
 
-            chart_img = base64.b64decode(canvas_base64)
+            chart_img = canvas.screenshot_as_png
             driver.close()
 
         except Exception as e:
