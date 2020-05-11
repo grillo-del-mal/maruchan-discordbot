@@ -73,7 +73,7 @@ class AnimalCrossing(commands.Cog):
 
             canvas_base64 = driver.execute_script("return arguments[0].toDataURL('image/png').substring(21);", canvas)
 
-            chart_img == base64.b64decode(canvas_base64)
+            chart_img = base64.b64decode(canvas_base64)
             driver.close()
 
         except Exception as e:
