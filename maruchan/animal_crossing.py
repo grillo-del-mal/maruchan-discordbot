@@ -64,8 +64,8 @@ class AnimalCrossing(commands.Cog):
         chart_img = None
         try:
             driver = webdriver.Remote(
-                "http://selenium-firefox:4444/wd/hub", 
-                DesiredCapabilities.FIREFOX)
+                "http://selenium-chrome:4444/wd/hub", 
+                DesiredCapabilities.CHROME)
             driver.set_window_size(640, 480)
             driver.get("http://turnipprophet:8000/" + args)
             chart = driver.find_element_by_id("chart")
