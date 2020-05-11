@@ -8,6 +8,11 @@ from datetime import datetime, timedelta, timezone
 
 from pymongo import MongoClient, ReturnDocument
 
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+import io
+
 DATE_MSG = (
     "lunes", 
     "martes", 
@@ -44,7 +49,6 @@ class AnimalCrossing(commands.Cog):
 
         self._db = self._client.get_database("animal_crossing")
 
-
     def show_info(self, ctx: commands.Context, tags):
         logger.debug("AC:")
         logger.debug("  author: " + str(ctx.author))
@@ -54,6 +58,24 @@ class AnimalCrossing(commands.Cog):
 
         for i in range(len(tags)):
             logger.debug("   arg[" + str(i) + "]: " + tags[i])
+
+    async def send_chart_png(self, ctx: commands.Context, args: str):
+        chart_img = None
+        try:
+            driver = webdriver.Remote("http://selenium-chrome:4444/wd/hub", DesiredCapabilities.CHROME)
+            driver.get("http://turnipprophet:8000/" + args)
+            chart = driver.find_element_by_id("chart")
+            chart_img = chart.get_screenshot_as_png()
+            driver.close()
+
+        except Exception as e:
+            logger.error("Error generating plot:" + str(e))
+            chart_img = None
+
+        if chart_img is not None:
+            await ctx.send("test:", file=discord.File(io.BytesIO(chart_img), 'plot.png'))
+
+        return chart_img
 
     async def get_data(
             self, 
@@ -123,10 +145,13 @@ class AnimalCrossing(commands.Cog):
                 "No hay datos para graficar `˚‧º·(˚ ˃̣̣̥᷄⌓˂̣̣̥᷅ )‧º·˚`")
             return
 
-        plot_link = self.gen_plot_link(week_data)
+        plot_link = "".join((
+            "https://turnipprophet.io",
+            self.gen_plot_args(week_data)))
 
         await ctx.send(
             "`o(*ﾟ▽ﾟ*)o` el grafico de " + target.display_name + ": " + plot_link)
+        await self.send_chart_png(ctx, self.gen_plot_args(week_data))
 
     async def get_all_plots(
             self, 
@@ -142,7 +167,9 @@ class AnimalCrossing(commands.Cog):
 
         i = 0
         for week_data in all_week_data:
-            plot_link = self.gen_plot_link(week_data)
+            plot_link = "".join((
+                "https://turnipprophet.io",
+                self.gen_plot_args(week_data)))
             members = [
                 member for member in ctx.guild.members if (
                     str(member) == week_data["user"])]
@@ -161,11 +188,10 @@ class AnimalCrossing(commands.Cog):
             return
 
 
-    def gen_plot_link(self, week_data):
+    def gen_plot_args(self, week_data):
         pattern = week_data.get("lwp", "")
         return "".join((
-            "https://turnipprophet.io?",
-            "prices=%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % (
+            "?prices=%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % (
                 str(week_data["data"].get("d0-0", "")), 
                 str(week_data["data"].get("d1-0", "")), 
                 str(week_data["data"].get("d1-1", "")), 
