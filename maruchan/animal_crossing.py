@@ -79,7 +79,7 @@ class AnimalCrossing(commands.Cog):
             try:
                 await ctx.send(
                     "`(*＾▽＾)／` :", 
-                    file=discord.File(io.BytesIO(chart_img), 'plot.png'))
+                    file=discord.File(io.BytesIO(chart_img)))
             except Exception as e:
                 logger.error("Error sending plot:" + str(e))
                 chart_img = None
