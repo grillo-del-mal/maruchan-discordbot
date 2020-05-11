@@ -62,7 +62,9 @@ class AnimalCrossing(commands.Cog):
     async def send_chart_png(self, ctx: commands.Context, args: str):
         chart_img = None
         try:
-            driver = webdriver.Remote("http://selenium-firefox:4444/wd/hub", DesiredCapabilities.FIREFOX)
+            driver = webdriver.Remote(
+                "http://selenium-firefox:4444/wd/hub", 
+                DesiredCapabilities.FIREFOX)
             driver.get("http://turnipprophet:8000/" + args)
             chart = driver.find_element_by_id("chart")
             chart_img = chart.screenshot_as_png
@@ -73,7 +75,9 @@ class AnimalCrossing(commands.Cog):
             chart_img = None
 
         if chart_img is not None:
-            await ctx.send("test:", file=discord.File(io.BytesIO(chart_img), 'plot.png'))
+            await ctx.send(
+                "test:", 
+                file=discord.File(io.BytesIO(chart_img), 'plot.png'))
 
         return chart_img
 
