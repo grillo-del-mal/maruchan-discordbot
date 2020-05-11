@@ -65,6 +65,7 @@ class AnimalCrossing(commands.Cog):
             driver = webdriver.Remote(
                 "http://selenium-firefox:4444/wd/hub", 
                 DesiredCapabilities.FIREFOX)
+            driver.set_window_size(1024, 520)
             driver.get("http://turnipprophet:8000/" + args)
             chart = driver.find_element_by_id("chart")
             chart_img = chart.screenshot_as_png
@@ -75,9 +76,13 @@ class AnimalCrossing(commands.Cog):
             chart_img = None
 
         if chart_img is not None:
-            await ctx.send(
-                "test:", 
-                file=discord.File(io.BytesIO(chart_img), 'plot.png'))
+            try:
+                await ctx.send(
+                    "`(*＾▽＾)／` :", 
+                    file=discord.File(io.BytesIO(chart_img), 'plot.png'))
+            except Exception as e:
+                logger.error("Error sending plot:" + str(e))
+                chart_img = None
 
         return chart_img
 
