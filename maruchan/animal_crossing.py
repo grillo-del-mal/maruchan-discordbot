@@ -12,6 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 import io
+from hashlib import blake2b
 
 DATE_MSG = (
     "lunes", 
@@ -65,7 +66,7 @@ class AnimalCrossing(commands.Cog):
             driver = webdriver.Remote(
                 "http://selenium-firefox:4444/wd/hub", 
                 DesiredCapabilities.FIREFOX)
-            driver.set_window_size(1024, 768)
+            driver.set_window_size(640, 480)
             driver.get("http://turnipprophet:8000/" + args)
             chart = driver.find_element_by_id("chart")
             chart_img = chart.screenshot_as_png
@@ -79,7 +80,11 @@ class AnimalCrossing(commands.Cog):
             try:
                 await ctx.send(
                     "`(*＾▽＾)／` :", 
-                    file=discord.File(io.BytesIO(chart_img)))
+                    file=discord.File(
+                        io.BytesIO(chart_img), 
+                        "plot_" +  blake2b(
+                            args.encode(), 
+                            digest_size=4).hexdigest() + ".png"))
             except Exception as e:
                 logger.error("Error sending plot:" + str(e))
                 chart_img = None
