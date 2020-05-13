@@ -75,22 +75,36 @@ class AnimalCrossing(commands.Cog):
             driver.get("http://turnipprophet:8000/" + args)
             canvas = driver.find_element_by_id("chart")
 
-            time.sleep(1)
+            time.sleep(.5)
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
-            row0 = rows[0].find_elements_by_tag_name("td")
-            row1 = rows[1].find_elements_by_tag_name("td")
+            i = 0
+            row0 = None
+            row1 = None
+            for row in rows:
+                if i == 0:
+                    row0 = row.find_elements_by_tag_name("td")
+                if i == 1:
+                    row1 = row.find_elements_by_tag_name("td")
+                    break
+                i += 1
 
+            logger.info("  row0: " + str(row0))
+            logger.info("  row1: " + str(row1))
+            logger.info("  row1_0: " + str(row1[0].text))
+            logger.info("  row1_1: " + str(row1[1].text))
+            logger.info("  row0_15: " + str(row0[15].text))
+            
             pattern = row1[0].text
             p_chance = row1[1].text
-            f_best = row0[-1].text
+            f_best = row0[15].text
             
             chart_img = canvas.screenshot_as_png
             driver.close()
 
         except Exception as e:
-            logger.error("Error generating plot:" + str(e))
+            logger.error("Error generating plot: " + str(e))
             chart_img = None
             pattern = None
             p_chance = None
