@@ -76,7 +76,7 @@ class AnimalCrossing(commands.Cog):
             driver.get("http://turnipprophet:8000/" + args)
             canvas = driver.find_element_by_id("chart")
 
-            time.sleep(.5)
+            time.sleep(1)
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
@@ -344,11 +344,13 @@ class AnimalCrossing(commands.Cog):
             driver.set_window_size(640, 480)
             driver.get("http://turnipprophet:8000/" + args)
 
-            time.sleep(.5)
+            time.sleep(1)
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
+            logger.info("  %s" % str(rows))
             row1 = rows[2].find_elements_by_tag_name("td")
+            logger.info("  %s" % str(row1))
 
             pattern = "N"
             if row1[0].text == "Large Spike":
@@ -359,6 +361,7 @@ class AnimalCrossing(commands.Cog):
                 pattern = "D"
             if row1[0].text == "Fluctuating":
                 pattern = "F"
+            logger.info("  %s" % (pattern))
 
             n_year, n_week = self.next_week(year, week)
             self.set_last_pattern(
