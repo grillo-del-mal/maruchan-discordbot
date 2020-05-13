@@ -328,10 +328,10 @@ class AnimalCrossing(commands.Cog):
         del week_data["_id"]
 
         await ctx.send("`(*＾▽＾)／` recibido")
-        self.update_future(target, year, week, self.gen_plot_args(week_data))
+        await self.update_future(target, year, week, self.gen_plot_args(week_data))
         await self.get_data(ctx, target, year, week, 10000)
 
-    def update_future(
+    async def update_future(
             self,
             target: discord.Member, 
             year: int, week: int, 
@@ -364,9 +364,9 @@ class AnimalCrossing(commands.Cog):
             logger.info("  %s" % (pattern))
 
             n_year, n_week = self.next_week(year, week)
-            self.set_last_pattern(
-                None, 
-                target, 
+            await self.set_last_pattern(
+                None,
+                target,
                 n_year, n_week, pattern)
 
         except Exception as e:
