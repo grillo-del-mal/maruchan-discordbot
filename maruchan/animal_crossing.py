@@ -1,5 +1,6 @@
 import logging
 import json
+from typing import Optional
 
 import discord
 from discord.ext.commands.view import StringView
@@ -75,7 +76,7 @@ class AnimalCrossing(commands.Cog):
             driver.get("http://turnipprophet:8000/" + args)
             canvas = driver.find_element_by_id("chart")
 
-            time.sleep(1)
+            time.sleep(.5)
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
@@ -327,11 +328,60 @@ class AnimalCrossing(commands.Cog):
         del week_data["_id"]
 
         await ctx.send("`(*＾▽＾)／` recibido")
+        self.update_future(target, year, week, self.gen_plot_args(week_data))
         await self.get_data(ctx, target, year, week, 10000)
+
+    def update_future(
+            self,
+            target: discord.Member, 
+            year: int, week: int, 
+            args: str):
+
+        try:
+            driver = webdriver.Remote(
+                "http://selenium-chrome:4444/wd/hub", 
+                DesiredCapabilities.CHROME)
+            driver.set_window_size(640, 480)
+            driver.get("http://turnipprophet:8000/" + args)
+
+            time.sleep(.5)
+            table = driver.find_element_by_id("turnipTable")
+
+            rows = table.find_elements_by_tag_name("tr")
+            row1 = rows[2].find_elements_by_tag_name("td")
+
+            pattern = "N"
+            if row1[0].text == "Large Spike":
+                pattern = "LS"
+            if row1[0].text == "Small Spike":
+                pattern = "SS"
+            if row1[0].text == "Decreasing":
+                pattern = "D"
+            if row1[0].text == "Fluctuating":
+                pattern = "F"
+
+            n_year, n_week = self.next_week(year, week)
+            self.set_last_pattern(
+                None, 
+                target, 
+                n_year, n_week, pattern)
+
+        except Exception as e:
+            logger.error("Error checking data: " + str(e))
+    
+    def next_week(self, year: int, week: int):
+        logger.debug("next_week:")
+        ts = datetime.strptime("%d-12-25" % (year), "%Y-%m-%d")
+        iso_week = ts.isocalendar()
+        if week == iso_week[1]:
+            # Si la semana es la ultima semana del año
+            return (year + 1, 1)
+        else:
+            return (year, week + 1)
 
     async def set_last_pattern(
             self, 
-            ctx: commands.Context, 
+            ctx: Optional[commands.Context], 
             target: discord.Member, 
             year: int, week: int, pattern: str):
 
@@ -394,8 +444,9 @@ class AnimalCrossing(commands.Cog):
 
         del week_data["_id"]
 
-        await ctx.send("`(*＾▽＾)／` recibido")
-        await self.get_data(ctx, target, year, week, 10000)
+        if ctx is not None:
+            await ctx.send("`(*＾▽＾)／` recibido")
+            await self.get_data(ctx, target, year, week, 10000)
 
     def get_target(
             self, ctx: commands.Context, member_info, default_result=None):
@@ -417,7 +468,7 @@ class AnimalCrossing(commands.Cog):
 
         logger.debug("  found: " + str(targets[0]))
         return targets[0]
-    
+
     def get_date(self, timestamp: datetime):
         logger.debug("get_date:")
         logger.debug("  timestamp: " + str(timestamp.isoformat()))
