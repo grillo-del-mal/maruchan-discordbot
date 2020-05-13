@@ -92,7 +92,7 @@ class AnimalCrossing(commands.Cog):
 
             pattern = row1[0].text
             p_chance = row1[1].text
-            f_best = row0[15].text
+            f_best = row0[-1].text
             
             chart_img = canvas.screenshot_as_png
             driver.close()
