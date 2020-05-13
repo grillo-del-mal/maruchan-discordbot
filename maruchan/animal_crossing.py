@@ -359,7 +359,6 @@ class AnimalCrossing(commands.Cog):
                 pattern = "D"
             if row1[0].text == "Fluctuating":
                 pattern = "F"
-            logger.info("  %s" % (pattern))
 
             n_year, n_week = self.next_week(year, week)
             await self.set_last_pattern(
