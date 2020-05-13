@@ -64,6 +64,9 @@ class AnimalCrossing(commands.Cog):
 
     async def send_chart_png(self, ctx: commands.Context, args: str):
         chart_img = None
+        pattern = None
+        p_chance = None
+        f_best = None
         try:
             driver = webdriver.Remote(
                 "http://selenium-chrome:4444/wd/hub", 
@@ -73,28 +76,46 @@ class AnimalCrossing(commands.Cog):
             canvas = driver.find_element_by_id("chart")
 
             time.sleep(1)
+            table = driver.find_element_by_id("turnipTable")
 
+            rows = table.find_elements_by_tag_name("tr")
+            row0 = rows[0].find_elements_by_tag_name("td")
+            row1 = rows[1].find_elements_by_tag_name("td")
+
+            pattern = row1[0].text
+            p_chance = row1[1].text
+            f_best = row0[-1].text
+            
             chart_img = canvas.screenshot_as_png
             driver.close()
 
         except Exception as e:
             logger.error("Error generating plot:" + str(e))
             chart_img = None
+            pattern = None
+            p_chance = None
+            f_best = None
 
         if chart_img is not None:
             try:
                 await ctx.send(
-                    "`(*＾▽＾)／` :", 
+                    "".join((
+                        "`(*＾▽＾)／` Tu patron más probable es '%s' con %s de probabilidad, " % (
+                            pattern,
+                            p_chance
+                        ),
+                        "el valor máximo al que puede llegar es de %s" % (f_best)
+                    )), 
                     file=discord.File(
                         io.BytesIO(chart_img), 
                         "plot_" +  blake2b(
                             args.encode(), 
                             digest_size=4).hexdigest() + ".png"))
+                return
             except Exception as e:
                 logger.error("Error sending plot:" + str(e))
                 chart_img = None
-
-        return chart_img
+        await ctx.send("`(꒪꒫꒪)` Nu c que pasó con tu gráfico, los datos estan raros...")
 
     async def get_data(
             self, 
