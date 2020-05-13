@@ -79,16 +79,8 @@ class AnimalCrossing(commands.Cog):
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
-            i = 0
-            row0 = None
-            row1 = None
-            for row in rows:
-                if i == 1:
-                    row0 = row.find_elements_by_tag_name("td")
-                if i == 2:
-                    row1 = row.find_elements_by_tag_name("td")
-                    break
-                i += 1
+            row0 = rows[1].find_elements_by_tag_name("td")
+            row1 = rows[2].find_elements_by_tag_name("td")
 
             pattern = row1[0].text
             p_chance = row1[1].text
