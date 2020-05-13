@@ -83,18 +83,12 @@ class AnimalCrossing(commands.Cog):
             row0 = None
             row1 = None
             for row in rows:
-                if i == 0:
-                    row0 = row.find_elements_by_tag_name("td")
                 if i == 1:
+                    row0 = row.find_elements_by_tag_name("td")
+                if i == 2:
                     row1 = row.find_elements_by_tag_name("td")
                     break
                 i += 1
-
-            logger.info("  row0: " + str(row0))
-            logger.info("  row1: " + str(row1))
-            logger.info("  row1_0: " + str(row1[0].text))
-            logger.info("  row1_1: " + str(row1[1].text))
-            logger.info("  row0_15: " + str(row0[15].text))
 
             pattern = row1[0].text
             p_chance = row1[1].text
