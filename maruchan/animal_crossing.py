@@ -75,7 +75,7 @@ class AnimalCrossing(commands.Cog):
             driver.get("http://turnipprophet:8000/" + args)
             canvas = driver.find_element_by_id("chart")
 
-            time.sleep(.5)
+            time.sleep(1)
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
@@ -95,7 +95,7 @@ class AnimalCrossing(commands.Cog):
             logger.info("  row1_0: " + str(row1[0].text))
             logger.info("  row1_1: " + str(row1[1].text))
             logger.info("  row0_15: " + str(row0[15].text))
-            
+
             pattern = row1[0].text
             p_chance = row1[1].text
             f_best = row0[15].text
