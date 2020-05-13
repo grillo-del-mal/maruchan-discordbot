@@ -348,9 +348,7 @@ class AnimalCrossing(commands.Cog):
             table = driver.find_element_by_id("turnipTable")
 
             rows = table.find_elements_by_tag_name("tr")
-            logger.info("  %s" % str(rows))
             row1 = rows[2].find_elements_by_tag_name("td")
-            logger.info("  %s" % str(row1))
 
             pattern = "N"
             if row1[0].text == "Large Spike":
