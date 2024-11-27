@@ -6,6 +6,11 @@ import json
 import codecs
 import random
 import re
+import time
+import typing
+import functools
+import typing
+import asyncio
 
 logger = logging.getLogger("root")
 
@@ -46,8 +51,7 @@ DEFAULT_QUERY = {
     "prompt": ""
 }
 
-BASE_PROMPT = """
-Esta es la interacción entre Term y Maru-chan
+BASE_PROMPT = """Esta es la interacción entre Term y Maru-chan
 Maru-chan es una Chilena joven que le gusta ayudar a la gente en el chat y le gusta mucho el Ramen.
 Maru-chan es modesta, humilde, escribe con buena gramática.
 Maru-chan no comparte información personal y no responde en más de 30 palabras.
@@ -56,8 +60,7 @@ Maru-chan escribe en Term solo lo necesario para cumplir con los requerimientos 
 
 """
 
-EMO_PROMPT = """
-Maru-chan es una Chilena joven que le gusta ayudar a la gente en el chat.
+EMO_PROMPT = """Maru-chan es una Chilena joven que le gusta ayudar a la gente en el chat.
 Maru-chan es modesta, humilde, escribe con buena gramática.
 Maru-chan solo puede describir usando palabras de la siguiente lista: %s
 
@@ -70,6 +73,11 @@ data = fp.read()
 kaomoji = json.loads(data)
 fp.close()
 
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return wrapper
 
 class MaruAI(commands.Cog):
 
@@ -79,7 +87,7 @@ class MaruAI(commands.Cog):
         self.config = config
         self.chat_history = []
         self.new_msgs = 0
-        logger.debug(BASE_PROMPT)
+        logger.info(BASE_PROMPT)
 
         self.general_chat.start()
 
@@ -100,32 +108,10 @@ class MaruAI(commands.Cog):
             "Term: %s escribió: '%s'" % (usr.display_name, msg)
             if usr != self.bot.user else
             "Maru-chan: %s" % msg
-            for (usr, msg) in self.chat_history ][-n:]
+            for (_, usr, msg) in self.chat_history ][-n:]
 
-    def check_emo(self, msg):
-        query = deepcopy(DEFAULT_QUERY)
-        query['prompt'] = "\n".join([
-            EMO_PROMPT % (", ".join(kaomoji.keys())),
-            "Term: Considerando la siguiente conversación:"
-            *self.write_history(18),
-            "Maru-chan: %s" % msg,
-            "",
-            "Term: Que emocion de la lista sientes cuando dices la ultma frase? Responde en una palabra.",
-            "Maru-chan: "])
-        r = requests.post(self.config["hostname"] + '/completion', json=query, headers=HEADERS)
-        maru_resp = r.json()["content"].strip().split('\n')[0].strip().lower()
-        logger.debug(maru_resp)
-        rr = re.search(r'[a-z]+', maru_resp)
-        maru_resp = rr[0] if rr is not None else ''
-
-        kao = '(✿ㆁᴗㆁ)'
-        if maru_resp in kaomoji:
-            kao = random.sample(kaomoji[maru_resp], 1)[0]
-        return kao
-
-    async def send_msg(self):
-        last_msgs = self.new_msgs
-        self.new_msgs = 0
+    @to_thread
+    def check_answer(self):
         query = deepcopy(DEFAULT_QUERY)
         query['prompt'] = "\n".join([
             BASE_PROMPT,
@@ -135,12 +121,42 @@ class MaruAI(commands.Cog):
             "Term: El chat está encendido, presentate en menos de 30 palabras.",
             "Maru-chan: "])
         r = requests.post(self.config["hostname"] + '/completion', json=query, headers=HEADERS)
-        maru_resp = r.json()["content"].strip().split('\n')[0].strip()
-        emo = self.check_emo(maru_resp)
+        return r.json()["content"].strip().split('\n')[0].strip()
 
-        logger.debug("Maru-chan: %s %s" % (emo, maru_resp))
+    @to_thread
+    def check_emo(self, msg):
+        query = deepcopy(DEFAULT_QUERY)
+        query['prompt'] = "\n".join([
+            EMO_PROMPT % (", ".join(kaomoji.keys())),
+            "Term: Considerando la siguiente conversación:",
+            *self.write_history(18),
+            "Maru-chan: %s" % msg,
+            "",
+            "Term: Que emocion de la lista sientes cuando dices la ultma frase? Responde en una palabra.",
+            "Maru-chan: "])
+        r = requests.post(self.config["hostname"] + '/completion', json=query, headers=HEADERS)
+        maru_resp = r.json()["content"].strip().split('\n')[0].strip().lower()
+        logger.info(maru_resp)
+        rr = re.search(r'[a-z]+', maru_resp)
+        maru_resp = rr[0] if rr is not None else ''
 
-        self.chat_history.append((self.bot.user, maru_resp))
+        kao = '(✿ㆁᴗㆁ)'
+        if maru_resp in kaomoji:
+            kao = random.sample(kaomoji[maru_resp], 1)[0]
+        return kao
+    
+    def append_history(self, author, message):
+        self.chat_history.append((time.time(), author, message))
+
+    async def send_msg(self):
+        self.new_msgs = 0
+
+        maru_resp = await self.check_answer()
+        emo = await self.check_emo(maru_resp)
+
+        logger.info("Maru-chan: %s %s" % (emo, maru_resp))
+
+        self.append_history(self.bot.user, maru_resp)
         await self.channel.send("%s %s" % (emo, maru_resp))
 
     @commands.Cog.listener()
@@ -150,8 +166,9 @@ class MaruAI(commands.Cog):
         if message.channel != self.channel:
             return
 
-        self.chat_history.append((message.author, self.clean_message(message)))
-        logger.debug("Term: %s escribió: '%s'" % (message.author.display_name, self.chat_history[-1][1]))
+        msg_text = self.clean_message(message)
+        self.append_history(message.author, msg_text)
+        logger.info("Term: %s escribió: '%s'" % (message.author.display_name, msg_text))
         self.new_msgs += 1
 
         # Respond inmediately
@@ -162,5 +179,11 @@ class MaruAI(commands.Cog):
     async def general_chat(self):
         if self.new_msgs == 0 and len(self.chat_history) > 0:
             return
+        
+        # Clear outdated messages
+        cut_time = time.time() - 1800
+        while len(self.chat_history) > 0 and self.chat_history[0][0] < cut_time:
+            logger.debug("Msg timeout")
+            self.chat_history.pop(0)
 
         await self.send_msg()

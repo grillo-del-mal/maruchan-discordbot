@@ -33,32 +33,38 @@ bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 @bot.event
 async def on_ready():
     """on_ready."""
-    logger.debug('Logged in as')
-    logger.debug(bot.user.name)
-    logger.debug(bot.user.id)
+    logger.info('Logged in as')
+    logger.info(bot.user.name)
+    logger.info(bot.user.id)
     await bot.add_cog(TableFlip(bot))
     await bot.add_cog(Starbound(bot, config['starbound']))
-    logger.debug('------')
+    logger.info('------')
 
 installed = False
 
 @bot.command()
 async def install(ctx: commands.Context):
-    if config["bot"]["admin"] == ctx.message.author.id:
-        return
-
+    global installed
     if installed:
         return
+
+    if config["bot"]["admin"] != ctx.message.author.id:
+        logger.error('Unknown id: %d' % ctx.message.author.id)
+        return
+
     await bot.add_cog(MaruAI(bot, ctx.message.channel, config['maruai']))
     installed = True
 
 @bot.command()
 async def uninstall(ctx: commands.Context):
-    if config["bot"]["admin"] == ctx.message.author.id:
-        return
-
+    global installed
     if not installed:
         return
+
+    if config["bot"]["admin"] != ctx.message.author.id:
+        logger.error('Unknown id: %d' % ctx.message.author.id)
+        return
+
     await bot.remove_cog("MaruAI")
     installed = False
 
