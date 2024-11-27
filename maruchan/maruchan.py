@@ -8,7 +8,7 @@ import logging
 
 from tableflip import TableFlip
 from starbound import Starbound
-import upsidedown
+from maruai import MaruAI
 
 formatter = logging.Formatter(
     fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
@@ -40,10 +40,26 @@ async def on_ready():
     await bot.add_cog(Starbound(bot, config['starbound']))
     logger.debug('------')
 
-#@bot.event
-#async def on_message(message:discord.Message):
-#    """on_message."""
-#    ctx = await bot.get_context(message)
+installed = False
 
+@bot.command()
+async def install(ctx: commands.Context):
+    if config["bot"]["admin"] == ctx.message.author.id:
+        return
+
+    if installed:
+        return
+    await bot.add_cog(MaruAI(bot, ctx.message.channel, config['maruai']))
+    installed = True
+
+@bot.command()
+async def uninstall(ctx: commands.Context):
+    if config["bot"]["admin"] == ctx.message.author.id:
+        return
+
+    if not installed:
+        return
+    await bot.remove_cog("MaruAI")
+    installed = False
 
 bot.run(config["bot"]["token"])
