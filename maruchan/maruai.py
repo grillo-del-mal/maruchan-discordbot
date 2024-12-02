@@ -7,7 +7,6 @@ import codecs
 import random
 import re
 import time
-import typing
 import functools
 import typing
 import asyncio
@@ -16,13 +15,12 @@ logger = logging.getLogger("root")
 
 DEFAULT_QUERY = {
     "stream": False,
-    "n_predict": 400,
-    "temperature": 0.7,
+    "n_predict": 80,
+    "temperature": 0.6,
+    "dynatemp_range": 0.2,
     "stop": [
         "</s>",
-        "Maru-chan:",
-        "Term:",
-        "term:",
+        "Maru-chan:"
     ],
     "repeat_last_n": 256,
     "repeat_penalty": 1.18,
@@ -47,26 +45,26 @@ DEFAULT_QUERY = {
     "min_keep": 0,
     "image_data": [],
     "cache_prompt": True,
-    "api_key": "",
     "prompt": ""
 }
 
-BASE_PROMPT = """Esta es la interacción entre Term y Maru-chan
-Maru-chan es una Chilena joven que le gusta ayudar a la gente en el chat y le gusta mucho el Ramen.
-Maru-chan es modesta, humilde, escribe con buena gramática.
-Maru-chan no comparte información personal y no responde en más de 30 palabras.
-Term es la terminal con la que Maru-chan interactúa para hablar con el chat.
-Maru-chan escribe en Term solo lo necesario para cumplir con los requerimientos de Term.
+BASE_PROMPT = """%s
+Maru-chan escribe con buena gramática y da respuestas claras, concisas y relevantes.
+Maru-chan no comparte información personal y se asegura de que las respuestas tengan 30 palabras o menos. 
+Cuando se enfrenta a una ambigüedad, Maru-chan empleará habilidades de escucha activa, haciendo preguntas de seguimiento para asegurarse de que se comprenda antes de proporcionar una respuesta. 
+En situaciones en que Maru-chan no entienda el tema de conversacion, ella reconocerá sus limitaciones.
 
 """
 
-EMO_PROMPT = """Maru-chan es una Chilena joven que le gusta ayudar a la gente en el chat.
-Maru-chan es modesta, humilde, escribe con buena gramática.
-Maru-chan solo puede describir usando palabras de la siguiente lista: %s
+EMO_PROMPT = """%s
+Maru-chan solo puede usar palabras de la siguiente lista:
+%s
 
 """
 
 HEADERS = {'Content-type': 'application/json', 'Accept': 'application/json'}
+HISTORY_LIMIT = 15
+EMO_LIMIT = 3
 
 fp = codecs.open("emotes/kaomoji.json", "r", "utf-8")
 data = fp.read()
@@ -82,11 +80,16 @@ def to_thread(func: typing.Callable) -> typing.Coroutine:
 class MaruAI(commands.Cog):
 
     def __init__(self, bot, channel, config):
+        global BASE_PROMPT, EMO_PROMPT
         self.bot = bot
         self.channel = channel
         self.config = config
         self.chat_history = []
         self.new_msgs = 0
+
+        BASE_PROMPT = BASE_PROMPT % (config['personality_prompt'])
+        EMO_PROMPT = EMO_PROMPT % (config['personality_prompt'], ", ".join(kaomoji.keys()))
+
         logger.info(BASE_PROMPT)
 
         self.general_chat.start()
@@ -103,22 +106,44 @@ class MaruAI(commands.Cog):
             response = response.replace("<@%d>" % id, display)
         return response
 
-    def write_history(self,n):
-        return [
-            "Term: %s escribió: '%s'" % (usr.display_name, msg)
-            if usr != self.bot.user else
-            "Maru-chan: %s" % msg
-            for (_, usr, msg) in self.chat_history ][-n:]
+    def write_history(self, n=0):
+        hist = []
+        count = len(self.chat_history)
+        rg = range(count) if n <= 0 else range(count - n, count) if n < count else range(count)
+
+        first = True
+        for i in rg:
+            (cur_time, usr, msg) = self.chat_history[i]
+
+            if first:
+                first = False
+            else:
+                #check time
+                prev_time = self.chat_history[i-1][0]
+                if cur_time - prev_time > 2*24*60*60:
+                    hist.append("--- %d dias despues ---")
+                elif cur_time - prev_time > 2*60*60:
+                    hist.append("--- %d horas despues ---")
+                elif cur_time - prev_time > 60*60:
+                    hist.append("--- una hora despues ---")
+
+            hist.append(
+                "--- %s ---"
+                if usr is None else
+                "%s: %s" % (usr.display_name, msg)
+                if usr != self.bot.user else
+                "Maru-chan: %s" % msg)
+        return hist
 
     @to_thread
     def check_answer(self):
         query = deepcopy(DEFAULT_QUERY)
         query['prompt'] = "\n".join([
             BASE_PROMPT,
-            *self.write_history(18),
-            "Term: Responde en una oracion de menos de 30 palabras."
+            *self.write_history(HISTORY_LIMIT),
+            "--- Responde en una oracion de menos de 30 palabras. ---"
             if len(self.chat_history) > 0 else
-            "Term: El chat está encendido, presentate en menos de 30 palabras.",
+            "--- El chat está encendido, presentate en menos de 30 palabras. ---",
             "Maru-chan: "])
         r = requests.post(self.config["hostname"] + '/completion', json=query, headers=HEADERS)
         return r.json()["content"].strip().split('\n')[0].strip()
@@ -127,16 +152,14 @@ class MaruAI(commands.Cog):
     def check_emo(self, msg):
         query = deepcopy(DEFAULT_QUERY)
         query['prompt'] = "\n".join([
-            EMO_PROMPT % (", ".join(kaomoji.keys())),
-            "Term: Considerando la siguiente conversación:",
-            *self.write_history(18),
-            "Maru-chan: %s" % msg,
-            "",
-            "Term: Que emocion de la lista sientes cuando dices la ultma frase? Responde en una palabra.",
+            EMO_PROMPT,
+            *self.write_history(EMO_LIMIT),
+            "--- Que palabra de la lista describe como te hace sentir ese mensaje. Responde en 1 palabra. ---",
             "Maru-chan: "])
+        query['n_predict'] = 5
         r = requests.post(self.config["hostname"] + '/completion', json=query, headers=HEADERS)
         maru_resp = r.json()["content"].strip().split('\n')[0].strip().lower()
-        logger.info(maru_resp)
+        logger.debug(maru_resp)
         rr = re.search(r'[a-z]+', maru_resp)
         maru_resp = rr[0] if rr is not None else ''
 
@@ -150,12 +173,11 @@ class MaruAI(commands.Cog):
 
     async def send_msg(self):
         self.new_msgs = 0
-
-        maru_resp = await self.check_answer()
-        emo = await self.check_emo(maru_resp)
+        async with self.channel.typing():
+            maru_resp = await self.check_answer()
+            emo = await self.check_emo(maru_resp)
 
         logger.info("Maru-chan: %s %s" % (emo, maru_resp))
-
         self.append_history(self.bot.user, maru_resp)
         await self.channel.send("%s %s" % (emo, maru_resp))
 
@@ -168,7 +190,7 @@ class MaruAI(commands.Cog):
 
         msg_text = self.clean_message(message)
         self.append_history(message.author, msg_text)
-        logger.info("Term: %s escribió: '%s'" % (message.author.display_name, msg_text))
+        logger.info("%s: %s" % (message.author.display_name, msg_text))
         self.new_msgs += 1
 
         # Respond inmediately
